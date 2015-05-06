@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Session implements Serializable {
 	private static final long serialVersionUID = 7648688658648829803L;
 
-	enum Role {
+	public enum Role {
 		Admin, ProdManager, InvManager
 	}
 
