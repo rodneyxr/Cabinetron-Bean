@@ -6,8 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-
-import org.glassfish.jersey.internal.util.Base64;
+import java.util.Base64;
 
 public class Utils {
 
@@ -31,11 +30,11 @@ public class Utils {
 				return null;
 			}
 		}
-		return Base64.encodeAsString(bytes);// Base64.getEncoder().encodeToString(bytes);// new String(bytes);
+		return Base64.getEncoder().encodeToString(bytes);
 	}
 
 	public static Object deblobify(String blob) {
-		byte[] bytes = Base64.decode(blob.getBytes());// Base64.getDecoder().decode(blob);
+		byte[] bytes = Base64.getDecoder().decode(blob);
 		ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
 		ObjectInputStream in = null;
 		Object o;

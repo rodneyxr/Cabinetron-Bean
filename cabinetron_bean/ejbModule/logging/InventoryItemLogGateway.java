@@ -64,7 +64,15 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 
 		// add them to the log object
 		for (String blob : blobs) {
-			logList.addElement((InventoryItemLogEntry) Utils.deblobify(blob));// .addLogEntry((InventoryItemLogEntry) Utils.deblobify(blob));
+			InventoryItemLogEntry entry = (InventoryItemLogEntry) Utils.deblobify(blob);
+			if (entry != null) {
+				logList.addElement(entry);
+			} else {
+				// entry is corrupted so remove it from DB
+				System.err.println("Error: deblobifying, removing entry");
+				jedis.zrem(key, blob);
+			}
+			// logList.addElement((InventoryItemLogEntry) Utils.deblobify(blob));// .addLogEntry((InventoryItemLogEntry) Utils.deblobify(blob));
 		}
 
 		return logList;
