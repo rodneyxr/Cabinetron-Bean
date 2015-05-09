@@ -49,7 +49,6 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 
 	@Lock(LockType.READ)
 	public DefaultListModel<InventoryItemLogEntry> getLogListModel(UUID item) {
-		System.out.println("Reading from redis...");
 		// instantiate log to return
 		DefaultListModel<InventoryItemLogEntry> logList = new DefaultListModel<InventoryItemLogEntry>();
 
@@ -69,7 +68,6 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 				jedis.zrem(key, blob);
 			}
 		}
-		System.out.println("Done reading from redis!");
 		return logList;
 	}
 
@@ -87,7 +85,6 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 		jedis.zadd(key, insertPos, Utils.blobify(entry));
 
 		notifyObservers(item, entry);
-		System.out.println("done notifying observers.");
 	}
 
 	/**
@@ -99,7 +96,6 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 		try {
 			for (int i = 0; i < observers.size(); i++) {
 				((StateObserverRemote) observers.get(i)).callback(item, entry);
-				System.out.println("Callback: " + i);
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
