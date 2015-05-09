@@ -5,5 +5,5 @@ import java.rmi.RemoteException;
 import java.util.UUID;
 
 public interface StateObserverRemote extends Remote {
-	public void callback(UUID item) throws RemoteException; 
+	public void callback(UUID item, InventoryItemLogEntry entry) throws RemoteException;
 }

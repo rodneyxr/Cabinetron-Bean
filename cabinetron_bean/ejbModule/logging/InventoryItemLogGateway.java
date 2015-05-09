@@ -49,18 +49,14 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 
 	@Lock(LockType.READ)
 	public DefaultListModel<InventoryItemLogEntry> getLogListModel(UUID item) {
-		// if (Main.DEBUG_MODE)
-		// System.out.println("InventoryItemLogGateway->getLog(): " + getKeyForItem(item)); // DEBUG
-
+		System.out.println("Reading from redis...");
 		// instantiate log to return
-		// InventoryItemLog logList = new InventoryItemLog();
 		DefaultListModel<InventoryItemLogEntry> logList = new DefaultListModel<InventoryItemLogEntry>();
 
 		// get key and retrieve the set of entries from the DB
 		String key = getKeyForItem(item);
 		long cardinality = jedis.zcard(key);
 		Set<String> blobs = jedis.zrange(key, 0, cardinality);
-		// System.out.println("Cardinality: " + cardinality + ", Size: " + blobs.size()); // DEBUG
 
 		// add them to the log object
 		for (String blob : blobs) {
@@ -72,16 +68,14 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 				System.err.println("Error: deblobifying, removing entry");
 				jedis.zrem(key, blob);
 			}
-			// logList.addElement((InventoryItemLogEntry) Utils.deblobify(blob));// .addLogEntry((InventoryItemLogEntry) Utils.deblobify(blob));
 		}
-
+		System.out.println("Done reading from redis!");
 		return logList;
 	}
 
 	@Lock(LockType.WRITE)
 	public void addLogEntry(UUID item, InventoryItemLogEntry entry) {
-		// System.out.println("InventoryItemLogGateway->addLogEntry(): " + getKeyForItem(item)); // DEBUG
-		// System.out.println(entry); // DEBUG
+		System.out.println("Adding entry " + entry);
 
 		String key = getKeyForItem(item);
 		// get cardinality of set to append to the end of the ordered set
@@ -92,7 +86,8 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 		// add entry to the end of the ordered set
 		jedis.zadd(key, insertPos, Utils.blobify(entry));
 
-		notifyObservers(item);
+		notifyObservers(item, entry);
+		System.out.println("done notifying observers.");
 	}
 
 	/**
@@ -100,10 +95,11 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 	 * 
 	 * @param item
 	 */
-	private void notifyObservers(UUID item) {
+	private void notifyObservers(UUID item, InventoryItemLogEntry entry) {
 		try {
 			for (int i = 0; i < observers.size(); i++) {
-				((StateObserverRemote) observers.get(i)).callback(item);
+				((StateObserverRemote) observers.get(i)).callback(item, entry);
+				System.out.println("Callback: " + i);
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -113,10 +109,12 @@ public class InventoryItemLogGateway implements InventoryItemLogGatewayRemote {
 	@Lock(LockType.WRITE)
 	public void registerObserver(StateObserverRemote o) {
 		observers.add(o);
+		System.out.printf("Observer Registered, Observers: %d\n", observers.size());
 	}
 
 	@Lock(LockType.WRITE)
 	public void unregisterObserver(StateObserverRemote o) {
 		observers.remove(o);
+		System.out.printf("Observer Unreregistered, Observers: %d\n", observers.size());
 	}
 }
